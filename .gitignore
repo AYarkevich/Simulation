@@ -4,6 +4,7 @@ target/
 src/
 .vscode
 .idea
+.cargo
 
 #Here's a folder with assets
 #/Assets
