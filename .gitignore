@@ -4,6 +4,7 @@ target/
 wasm/
 .vscode
 .idea
+.cargo
 
 #Here's a folder with assets
 #/Assets
