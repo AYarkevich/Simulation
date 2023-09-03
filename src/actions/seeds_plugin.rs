@@ -1,16 +1,7 @@
-use bevy::{
-    prelude::*,
-    sprite::MaterialMesh2dBundle,
-};
+use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 use rand::prelude::*;
 
-use crate::{
-    entities::{
-        seed::*,
-        world_board::*,
-    },
-};
-
+use crate::entities::{seed::*, world_board::*};
 
 const CELLS_STEP: i32 = 32;
 
@@ -59,6 +50,15 @@ fn seeds_spawn_action(
                 },
                 Seed {},
             ));
+
+            // commands.spawn((
+            //     SceneBundle {
+            //         scene: assetServer.load("models\\seed.obj"),
+            //         transform: Transform::from_xyz(pos_x, pos_y, 1.),
+            //         ..default()
+            //     },
+            //     Seed {},
+            // ));
         }
     }
 }

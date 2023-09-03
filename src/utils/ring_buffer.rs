@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-pub(crate) struct RingBuffer<T> {
+pub struct RingBuffer<T> {
     buffer: VecDeque<T>,
     capacity: usize,
 }

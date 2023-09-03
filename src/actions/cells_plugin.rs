@@ -1,29 +1,24 @@
+use bevy::math::Vec3Swizzles;
 use bevy::{
-    input::{ButtonState, mouse::MouseButtonInput},
+    input::{mouse::MouseButtonInput, ButtonState},
     prelude::*,
     sprite::collide_aabb::collide,
     sprite::MaterialMesh2dBundle,
     window::Window,
 };
-use bevy::math::Vec3Swizzles;
 
 use crate::{
     cameras::main_camera::*,
-    core::{
-        network::*
-    },
-    entities::{
-        cells::*,
-        seed::*,
-        world_board::*,
-    },
+    core::network::*,
+    entities::{cells::*, seed::*, world_board::*},
+    ui::info_board::InfoBoardSettings,
 };
 
 pub struct CellsPlugin;
 
 impl Plugin for CellsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (cells_move_action, cells_spawn_action));
+        app.add_systems(Update, (cells_move_action, cells_spawn_action, update_metrics_system));
     }
 }
 
@@ -54,18 +49,25 @@ fn cells_move_action(
     mut seeds: Query<(&Transform, Entity), (With<Seed>, Without<Cell>)>,
     boards: Query<&WorldBoard>,
 ) {
-    let summ_of_seeds = seeds.iter()
+    let summ_of_seeds = seeds
+        .iter()
         .map(|(transform, _)| transform.translation)
         .fold((0., 0.), |acc, x| (acc.0 + x.x, acc.1 + x.y));
     let len = seeds.iter().len() as f32;
     let center_of_seeds = Vec2::new(summ_of_seeds.0 / len, summ_of_seeds.1 / len);
-    
-    let cells_positions :Vec<Vec2> = seeds.iter().map(|(transform, _)| transform.translation.xy()).collect();
-    let closed_seed = find_closest_element(cells_positions.as_slice(),center_of_seeds);
+
+    let cells_positions: Vec<Vec2> = seeds
+        .iter()
+        .map(|(transform, _)| transform.translation.xy())
+        .collect();
+    let closed_seed = find_closest_element(cells_positions.as_slice(), center_of_seeds);
 
     //time.seconds_since_starttime();
     for (mut transform, shape, entity) in query.iter_mut() {
-        let moving_vect = shape.into_inner().activate(transform.translation, closed_seed.unwrap_or(Vec2::default()));
+        let moving_vect = shape.into_inner().activate(
+            transform.translation,
+            closed_seed.unwrap_or(Vec2::default()),
+        );
         transform.translation = transform.translation + moving_vect;
 
         let shape_position = transform.translation.xy();
@@ -79,13 +81,19 @@ fn cells_move_action(
         let cell_size = Vec2::new(15.0, 15.0);
 
         for (mut seed_transform, seed_entity) in seeds.iter_mut() {
-            if collide(transform.translation, cell_size, seed_transform.translation, seed_size).is_some() {
+            if collide(
+                transform.translation,
+                cell_size,
+                seed_transform.translation,
+                seed_size,
+            )
+            .is_some()
+            {
                 commands.entity(seed_entity).despawn();
             }
         }
     }
 }
-
 
 fn cells_spawn_action(
     mut commands: Commands,
@@ -114,7 +122,11 @@ fn cells_spawn_action(
                             MaterialMesh2dBundle {
                                 mesh: meshes.add(shape::Circle::new(15.).into()).into(),
                                 material: materials.add(ColorMaterial::from(Color::PURPLE)),
-                                transform: Transform::from_xyz(world_position.x, world_position.y, 1.),
+                                transform: Transform::from_xyz(
+                                    world_position.x,
+                                    world_position.y,
+                                    1.,
+                                ),
                                 ..default()
                             },
                             Cell {},
@@ -125,4 +137,13 @@ fn cells_spawn_action(
             ButtonState::Released => {}
         }
     }
+}
+
+fn update_metrics_system(
+    mut cells: Query<&Cell>,
+    mut seeds: Query<&Seed>,
+    mut info_board_settings: ResMut<InfoBoardSettings>,
+) {
+    info_board_settings.world_metrics.cells_count.push(cells.iter().count() as f64);
+    info_board_settings.world_metrics.seeds_count.push(seeds.iter().count() as f64);
 }
