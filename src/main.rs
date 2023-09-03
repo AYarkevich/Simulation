@@ -21,6 +21,7 @@ mod ui;
 mod core;
 mod actions;
 mod entities;
+mod utils;
 
 
 fn main() {
