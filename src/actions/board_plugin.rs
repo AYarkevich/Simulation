@@ -11,7 +11,7 @@ pub struct WorldBoardPlugin;
 impl Plugin for WorldBoardPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, board_spawn_action)
-            .insert_resource(ClearColor(Color::MAROON));
+            .insert_resource(ClearColor(Color::hex("#1B1B1B").unwrap()));
     }
 }
 
