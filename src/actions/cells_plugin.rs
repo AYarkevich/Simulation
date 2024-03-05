@@ -1,11 +1,13 @@
 use bevy::math::Vec3Swizzles;
+use bevy_rapier2d::prelude::*;
 use bevy::{
     input::{mouse::MouseButtonInput, ButtonState},
     prelude::*,
-    sprite::collide_aabb::collide,
     sprite::MaterialMesh2dBundle,
     window::Window,
 };
+use bevy_rapier2d::geometry::Collider;
+use bevy_rapier2d::pipeline::CollisionEvent;
 
 use crate::{
     cameras::main_camera::*,
@@ -18,7 +20,7 @@ pub struct CellsPlugin;
 
 impl Plugin for CellsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (cells_move_action, cells_spawn_action, update_metrics_system));
+        app.add_systems(Update, (cells_move_action, cells_spawn_action, update_metrics_system, check_collisions_system));
     }
 }
 
@@ -76,22 +78,6 @@ fn cells_move_action(
         if !world_board_rect.contains(shape_position) {
             commands.entity(entity).despawn();
         }
-
-        let seed_size = Vec2::new(3.0, 3.0);
-        let cell_size = Vec2::new(15.0, 15.0);
-
-        for (mut seed_transform, seed_entity) in seeds.iter_mut() {
-            if collide(
-                transform.translation,
-                cell_size,
-                seed_transform.translation,
-                seed_size,
-            )
-            .is_some()
-            {
-                commands.entity(seed_entity).despawn();
-            }
-        }
     }
 }
 
@@ -104,7 +90,7 @@ fn cells_spawn_action(
     boards: Query<(&WorldBoard, &Transform), With<WorldBoard>>,
     camera_q: Query<(&Camera, &GlobalTransform), With<GameCapCamera>>,
 ) {
-    for ev in events.iter() {
+    for ev in events.read() {
         match ev.state {
             ButtonState::Pressed => {
                 let (camera, camera_transform) = camera_q.single();
@@ -120,7 +106,7 @@ fn cells_spawn_action(
                     if board_rect.contains(world_position) {
                         commands.spawn((
                             MaterialMesh2dBundle {
-                                mesh: meshes.add(shape::Circle::new(15.).into()).into(),
+                                mesh: meshes.add(Circle { radius: 15.0 }).into(),
                                 material: materials.add(ColorMaterial::from(Color::PURPLE)),
                                 transform: Transform::from_xyz(
                                     world_position.x,
@@ -130,7 +116,8 @@ fn cells_spawn_action(
                                 ..default()
                             },
                             Cell {},
-                        ));
+                        ))
+                            .insert(Collider::ball(15.));
                     }
                 }
             }
@@ -146,4 +133,21 @@ fn update_metrics_system(
 ) {
     info_board_settings.world_metrics.cells_count.push(cells.iter().count() as f64);
     info_board_settings.world_metrics.seeds_count.push(seeds.iter().count() as f64);
+}
+
+fn check_collisions_system(
+    mut commands: Commands,
+    mut collision_events: EventReader<CollisionEvent>,
+    query: Query<Entity, (With<Collider>, Without<Cell>)>,
+) {
+    for collision_event in collision_events.read() {
+        if let CollisionEvent::Started(entity1, entity2, _) = collision_event {
+            let entities = [entity1, entity2];
+            for &entity in &entities {
+                if let Ok(entity) = query.get(*entity) {
+                    commands.entity(entity).despawn();
+                }
+            }
+        }
+    }
 }

@@ -2,6 +2,7 @@ use bevy::{
     prelude::*,
     window::{PresentMode, Window, WindowPlugin},
 };
+use bevy_rapier2d::plugin::{NoUserData, RapierConfiguration, RapierPhysicsPlugin};
 
 use crate::{
     actions::{
@@ -31,12 +32,13 @@ fn main() {
                 title: "Game_cap!".into(),
                 resolution: (900., 600.).into(),
                 present_mode: PresentMode::AutoVsync,
-                fit_canvas_to_parent: true,
                 prevent_default_event_handling: false,
                 ..default()
             }),
             ..default()
         }))
+        .add_systems(Startup, setup_system)
+        .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugins((
             GameCapCameraPlugin,
             DebugPlugin,
@@ -47,3 +49,13 @@ fn main() {
         ))
         .run();
 }
+
+fn setup_system(
+    mut commands: Commands,
+) {
+    commands.insert_resource(RapierConfiguration {
+        gravity: Vec2::new(0., 0.),
+        ..Default::default()
+    });
+}
+

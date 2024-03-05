@@ -3,7 +3,7 @@ use bevy::{
 };
 
 use crate::{
-  entities::world_board::*,  
+  entities::world_board::*,
 };
 
 pub struct WorldBoardPlugin;

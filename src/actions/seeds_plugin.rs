@@ -1,4 +1,6 @@
 use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
+use bevy_rapier2d::dynamics::{RigidBody};
+use bevy_rapier2d::geometry::{ActiveEvents, Collider};
 use rand::prelude::*;
 
 use crate::entities::{seed::*, world_board::*};
@@ -43,13 +45,16 @@ fn seeds_spawn_action(
 
             commands.spawn((
                 MaterialMesh2dBundle {
-                    mesh: meshes.add(shape::Cube::new(3.).into()).into(),
+                    mesh: meshes.add(Rectangle::from_size(Vec2 { x: 3., y: 3. })).into(),
                     material: materials.add(ColorMaterial::from(Color::YELLOW)),
                     transform: Transform::from_xyz(pos_x, pos_y, 1.),
                     ..default()
                 },
                 Seed {},
-            ));
+            ))
+                .insert(RigidBody::Dynamic)
+                .insert(Collider::cuboid(3. / 2., 3. / 2.))
+                .insert(ActiveEvents::COLLISION_EVENTS);
 
             // commands.spawn((
             //     SceneBundle {

@@ -2,8 +2,8 @@ use bevy::{
     diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin},
     prelude::*,
 };
+use egui_plot::{Line, Plot, PlotPoints};
 use egui::{
-    plot::{Line, Plot, PlotPoints},
     Rgba,
 };
 
@@ -172,7 +172,7 @@ fn change_text_system(
     mut info_board_settings: ResMut<InfoBoardSettings>,
 ) {
     let mut fps = 0.0;
-    if let Some(fps_diagnostic) = diagnostics.get(FrameTimeDiagnosticsPlugin::FPS) {
+    if let Some(fps_diagnostic) = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS) {
         if let Some(fps_smoothed) = fps_diagnostic.smoothed() {
             fps = fps_smoothed;
         }
@@ -197,7 +197,7 @@ fn cursor_events(
         .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor))
         .map(|ray| ray.origin)
     {
-        for _ in cursor_evr.iter() {
+        for _ in cursor_evr.read() {
             info_board_settings.world_cursor_position = world_position;
         }
     }
